@@ -25,6 +25,9 @@ public class CameraLook : MonoBehaviour
     [SerializeField, Min(0f)] private float sensitivityY = 0.1f;
     [Tooltip("Inverse l'axe vertical (souris vers le haut = regarder vers le bas).")]
     [SerializeField] private bool invertY = false;
+    [Tooltip("Lissage de la rotation en secondes. 0 = désactivé (rotation directe, comportement par défaut). " +
+             "Des valeurs de 0.02 à 0.08 donnent un lissage léger.")]
+    [SerializeField, Min(0f)] private float lookSmoothing = 0f;
 
     [Header("Limites verticales (degrés)")]
     [SerializeField, Range(-89f, 0f)] private float minPitch = -85f;
@@ -43,6 +46,7 @@ public class CameraLook : MonoBehaviour
     private float selfYaw;
     private bool cursorLockedByUs;
     private int framesToSkip;
+    private Vector2 smoothedDelta;
 
     /// <summary>Permet à d'autres systèmes (pause, menu, cinématique) de suspendre la rotation.</summary>
     public bool LookEnabled { get; set; } = true;
@@ -50,9 +54,13 @@ public class CameraLook : MonoBehaviour
     /// <summary>Angle vertical courant en degrés (négatif = regarder vers le haut).</summary>
     public float Pitch => pitch;
 
+    /// <summary>Vrai si ce composant a verrouillé le curseur (et ne l'a pas libéré depuis).</summary>
+    public bool CursorLocked => cursorLockedByUs;
+
     public float SensitivityX => sensitivityX;
     public float SensitivityY => sensitivityY;
     public bool InvertY => invertY;
+    public float LookSmoothing => lookSmoothing;
     public float MinPitch => minPitch;
     public float MaxPitch => maxPitch;
     public bool RotateParentYaw => rotateParentYaw;
@@ -77,6 +85,7 @@ public class CameraLook : MonoBehaviour
         }
 
         framesToSkip = FramesToSkipAfterLock;
+        smoothedDelta = Vector2.zero;
         ApplyPitch();
     }
 
@@ -121,23 +130,26 @@ public class CameraLook : MonoBehaviour
 
         if (!active)
         {
+            smoothedDelta = Vector2.zero;
             return;
         }
 
         if (framesToSkip > 0)
         {
             framesToSkip--;
+            smoothedDelta = Vector2.zero;
             return;
         }
 
         // Pas de rotation tant que le curseur n'est pas verrouillé (focus perdu, Échap dans l'éditeur).
-        if (Cursor.lockState != CursorLockMode.Locked)
+        if (!IsCursorLocked())
         {
+            smoothedDelta = Vector2.zero;
             return;
         }
 
-        // Le delta est déjà en pixels par frame : surtout pas de Time.deltaTime.
-        Vector2 delta = ReadMouseDelta();
+        // Le delta est déjà en pixels par frame : surtout pas de Time.deltaTime pour la rotation.
+        Vector2 delta = SmoothDelta(ReadMouseDelta());
         if (delta.x == 0f && delta.y == 0f)
         {
             return;
@@ -152,6 +164,28 @@ public class CameraLook : MonoBehaviour
     }
 
     // ------------------------------------------------------------- Rotation
+
+    /// <summary>
+    /// Lissage exponentiel du delta de souris. Avec lookSmoothing = 0, renvoie le delta brut
+    /// sans aucun état (comportement identique à avant). La somme des rotations est conservée :
+    /// le lissage ne fait que retarder légèrement la fin du mouvement.
+    /// </summary>
+    private Vector2 SmoothDelta(Vector2 raw)
+    {
+        if (lookSmoothing <= 0f)
+        {
+            smoothedDelta = Vector2.zero;
+            return raw;
+        }
+
+        float blend = 1f - Mathf.Exp(-Time.deltaTime / lookSmoothing);
+        smoothedDelta = Vector2.Lerp(smoothedDelta, raw, blend);
+        if (smoothedDelta.sqrMagnitude < 0.0001f && raw == Vector2.zero)
+        {
+            smoothedDelta = Vector2.zero;
+        }
+        return smoothedDelta;
+    }
 
     private float ClampPitch(float value)
     {
@@ -182,6 +216,15 @@ public class CameraLook : MonoBehaviour
     }
 
     // --------------------------------------------------------------- Curseur
+
+    /// <summary>
+    /// Vrai si le curseur est verrouillé. En mode batch (tests automatiques, sans fenêtre),
+    /// le système ne verrouille jamais le curseur : on se fie alors à notre propre état.
+    /// </summary>
+    private bool IsCursorLocked()
+    {
+        return Cursor.lockState == CursorLockMode.Locked || (Application.isBatchMode && cursorLockedByUs);
+    }
 
     private bool IsLookActive()
     {

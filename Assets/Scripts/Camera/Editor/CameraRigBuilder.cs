@@ -84,6 +84,8 @@ public static class CameraRigBuilder
             urp.stopNaN = false;
             urp.dithering = false;
 
+            cameraObject.AddComponent<CameraEffects>();
+
             GameObject hands = new GameObject("HandsAnchor");
             hands.transform.SetParent(cameraObject.transform, false);
 
