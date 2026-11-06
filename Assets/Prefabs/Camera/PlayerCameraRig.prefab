@@ -76,7 +76,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d46ffbb7665ceb54499de29a8112efdd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraLook
-  sensitivity: 0.1
+  sensitivityX: 0.1
+  sensitivityY: 0.1
+  invertY: 0
   minPitch: -85
   maxPitch: 85
   rotateParentYaw: 1

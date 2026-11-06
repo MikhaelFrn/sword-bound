@@ -18,6 +18,23 @@ public class DummyPlayerMover : MonoBehaviour
         body = GetComponent<Rigidbody>();
     }
 
+    private void Update()
+    {
+        // Touche P : bascule la pause (Time.timeScale 0 <-> 1) pour tester CameraLook.
+        // Lue dans Update (et non FixedUpdate, qui ne tourne plus quand timeScale vaut 0).
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard != null && keyboard.pKey.wasPressedThisFrame)
+        {
+            Time.timeScale = Mathf.Approximately(Time.timeScale, 0f) ? 1f : 0f;
+        }
+    }
+
+    private void OnDisable()
+    {
+        // Évite de laisser le jeu en pause en quittant le mode Play.
+        Time.timeScale = 1f;
+    }
+
     private void FixedUpdate()
     {
         Keyboard keyboard = Keyboard.current;

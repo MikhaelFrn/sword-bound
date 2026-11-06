@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -20,6 +21,9 @@ public static class CameraRigBuilder
     private const string SandboxFolder = "Assets/Sandbox/CameraSandbox";
     private const string MaterialFolder = SandboxFolder + "/Materials";
     private const string ScenePath = SandboxFolder + "/CameraSandbox.unity";
+    private const string KnightModelPath = SandboxFolder + "/Models/KnightCharacter.fbx";
+    private const float KnightDistance = 5f;
+    private const float KnightHeight = 1.8f;
 
     [MenuItem("Tools/Camera/Rebuild Camera Rig And Sandbox")]
     public static void BuildAll()
@@ -170,7 +174,103 @@ public static class CameraRigBuilder
         GameObject rigInstance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
         rigInstance.transform.SetParent(player.transform, false);
 
+        PlaceKnight(scene);
+
         EditorSceneManager.SaveScene(scene, ScenePath);
+    }
+
+    /// <summary>
+    /// Place le chevalier (repère visuel immobile) à KnightDistance mètres devant le point de départ,
+    /// face au joueur, à KnightHeight mètres de haut, posé sur le sol. Ne plante jamais si le modèle manque.
+    /// </summary>
+    private static void PlaceKnight(Scene scene)
+    {
+        GameObject model = AssetDatabase.LoadAssetAtPath<GameObject>(KnightModelPath);
+        if (model == null)
+        {
+            Debug.LogWarning("[CameraRigBuilder] Modèle introuvable, chevalier ignoré : " + KnightModelPath);
+            return;
+        }
+
+        GameObject knight = (GameObject)PrefabUtility.InstantiatePrefab(model, scene);
+        knight.name = "KnightStatue";
+        knight.transform.SetPositionAndRotation(Vector3.zero, Quaternion.Euler(0f, 180f, 0f));
+        knight.transform.localScale = Vector3.one;
+
+        // Matériaux URP Lit avec les couleurs de base du modèle (il n'a pas de textures).
+        Dictionary<string, Material> converted = new Dictionary<string, Material>();
+        Renderer[] renderers = knight.GetComponentsInChildren<Renderer>(true);
+        foreach (Renderer renderer in renderers)
+        {
+            Material[] source = renderer.sharedMaterials;
+            Material[] result = new Material[source.Length];
+            for (int i = 0; i < source.Length; i++)
+            {
+                Material original = source[i];
+                string key = original != null ? original.name : "Default" + i;
+                if (!converted.TryGetValue(key, out Material urpMaterial))
+                {
+                    Color color = new Color(0.6f, 0.6f, 0.65f);
+                    if (original != null && original.HasProperty("_BaseColor")) color = original.GetColor("_BaseColor");
+                    else if (original != null && original.HasProperty("_Color")) color = original.GetColor("_Color");
+                    color.a = 1f;
+
+                    urpMaterial = GetMaterial("Knight_" + SanitizeName(key), color);
+                    converted[key] = urpMaterial;
+                    Debug.Log("[CameraRigBuilder] Matériau chevalier '" + key + "' (" +
+                              (original != null ? original.shader.name : "null") + ") -> " + color);
+                }
+                result[i] = urpMaterial;
+            }
+            renderer.sharedMaterials = result;
+        }
+
+        // Mise à l'échelle sur la hauteur réelle du modèle, puis pose sur le sol.
+        Bounds bounds;
+        if (!TryGetBounds(renderers, out bounds) || bounds.size.y < 0.0001f)
+        {
+            Debug.LogWarning("[CameraRigBuilder] Dimensions du chevalier introuvables, échelle inchangée.");
+            knight.transform.position = new Vector3(0f, 0f, KnightDistance);
+            return;
+        }
+
+        Debug.Log("[CameraRigBuilder] Chevalier : taille d'origine " + bounds.size);
+        knight.transform.localScale = Vector3.one * (KnightHeight / bounds.size.y);
+
+        TryGetBounds(renderers, out bounds);
+        Vector3 offset = new Vector3(0f - bounds.center.x, 0f - bounds.min.y, KnightDistance - bounds.center.z);
+        knight.transform.position += offset;
+
+        TryGetBounds(renderers, out bounds);
+        Debug.Log("[CameraRigBuilder] Chevalier : taille finale " + bounds.size + ", centre " + bounds.center);
+    }
+
+    private static bool TryGetBounds(Renderer[] renderers, out Bounds bounds)
+    {
+        bounds = new Bounds();
+        bool found = false;
+        foreach (Renderer renderer in renderers)
+        {
+            if (!found)
+            {
+                bounds = renderer.bounds;
+                found = true;
+            }
+            else
+            {
+                bounds.Encapsulate(renderer.bounds);
+            }
+        }
+        return found;
+    }
+
+    private static string SanitizeName(string value)
+    {
+        foreach (char invalid in Path.GetInvalidFileNameChars())
+        {
+            value = value.Replace(invalid, '_');
+        }
+        return value.Replace(' ', '_');
     }
 
     private static GameObject CreateBlock(Transform parent, string name, Vector3 position, Vector3 scale, Material material)
