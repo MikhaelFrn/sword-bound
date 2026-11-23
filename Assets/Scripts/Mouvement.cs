@@ -1,150 +1,84 @@
-
 using UnityEngine;
 
-// Oblige l'objet à posséder un composant Rigidbody.
-// Si le composant est absent, Unity l'ajoute
-// automatiquement lorsque ce script est attaché.
 [RequireComponent(typeof(Rigidbody))]
-
-// Ce script permet de contrôler un robot en 3D.
-//
-// Fonctionnement :
-// 1. Lire les touches de déplacement du clavier.
-// 2. Calculer la direction du mouvement.
-// 3. Déplacer le robot avec son Rigidbody.
-// 4. Orienter progressivement le robot
-//    dans la direction de son déplacement.
 public class ControleurRobot3D : MonoBehaviour
 {
-    // Vitesse de déplacement du robot en unités/seconde.
-    // Modifiable dans l'Inspector de Unity.
+    [Header("Déplacement")]
     [SerializeField] private float vitesse = 5f;
+    [SerializeField] private float multiplicateurSprint = 1.6f;
 
-    // Contrôle la rapidité avec laquelle le robot
-    // s'oriente vers la direction de déplacement.
-    [SerializeField] private float vitesseRotation = 10f;
+    [Header("Saut")]
+    [SerializeField] private float hauteurSaut = 1.2f;
+    [Tooltip("Temps pendant lequel on peut encore sauter après avoir quitté le sol.")]
+    [SerializeField] private float tempsCoyote = 0.12f;
+    [Tooltip("Temps pendant lequel un appui sur Espace est mémorisé.")]
+    [SerializeField] private float tamponSaut = 0.15f;
 
-    // Référence au composant Rigidbody du robot.
-    // Ce composant permet d'interagir avec
-    // le système physique 3D de Unity.
     private Rigidbody corps;
-
-    // Vecteur qui représente la direction
-    // dans laquelle le robot doit se déplacer.
     private Vector3 direction;
+    private bool sprint;
+    private bool auSol;
+    private float tempsDepuisSol = 999f;
+    private float tempsDepuisAppui = 999f;
 
-    // Awake() est appelée lors de l'initialisation.
     private void Awake()
     {
-        // Récupérer le Rigidbody attaché
-        // au même GameObject que ce script.
         corps = GetComponent<Rigidbody>();
     }
 
-    // Update() est appelée à chaque image.
-    // Elle sert ici à lire les entrées du joueur.
     private void Update()
     {
-        // Lire les touches de déplacement horizontal.
-        //
-        // A ou flèche gauche  : -1
-        // D ou flèche droite  :  1
-        // Aucune touche       :  0
         float horizontal = Input.GetAxisRaw("Horizontal");
-
-        // Lire les touches de déplacement vertical.
-        //
-        // S ou flèche bas     : -1
-        // W ou flèche haut    :  1
-        // Aucune touche       :  0
-        //
-        // Dans ce jeu 3D, cet axe correspond
-        // au déplacement sur l'axe Z du monde.
         float vertical = Input.GetAxisRaw("Vertical");
 
-        // Construire le vecteur de déplacement.
-        //
-        // X = déplacement horizontal.
-        // Y = 0 : aucun déplacement vertical.
-        // Z = déplacement avant/arrière.
-        //
-        // ClampMagnitude limite la longueur
-        // du vecteur à 1.
-        //
-        // Cela évite que le robot se déplace
-        // plus rapidement en diagonale.
         direction = Vector3.ClampMagnitude(
-            new Vector3(horizontal, 0f, vertical),
+            transform.right * horizontal + transform.forward * vertical,
             1f
         );
+
+        sprint = Input.GetKey(KeyCode.LeftShift);
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            tempsDepuisAppui = 0f;
+        }
     }
 
-    // FixedUpdate() est appelée à intervalles
-    // de temps fixes par le moteur physique.
-    //
-    // Elle est adaptée aux déplacements
-    // effectués avec un Rigidbody.
     private void FixedUpdate()
     {
-        // Calculer et appliquer la nouvelle position.
-        //
-        // corps.position : position actuelle du robot.
-        // direction : direction du déplacement.
-        // vitesse : vitesse en unités/seconde.
-        // Time.fixedDeltaTime : durée du pas physique.
-        //
-        // MovePosition déplace le Rigidbody
-        // vers la position calculée.
-        corps.MovePosition(
-            corps.position
-            + direction * vitesse * Time.fixedDeltaTime
-        );
+        float dt = Time.fixedDeltaTime;
 
-        // Vérifier si le robot est presque immobile.
-        //
-        // sqrMagnitude représente la longueur
-        // du vecteur au carré.
-        //
-        // Si la direction est presque nulle,
-        // on arrête la méthode pour éviter
-        // de calculer une rotation inutile.
-        if (direction.sqrMagnitude <= 0.001f)
+        if (auSol) tempsDepuisSol = 0f;
+        else tempsDepuisSol += dt;
+        tempsDepuisAppui += dt;
+
+        float vitesseActuelle = vitesse * (sprint ? multiplicateurSprint : 1f);
+
+        Vector3 v = corps.linearVelocity;
+        v.x = direction.x * vitesseActuelle;
+        v.z = direction.z * vitesseActuelle;
+
+        if (tempsDepuisAppui <= tamponSaut && tempsDepuisSol <= tempsCoyote)
         {
-            return;
+            v.y = Mathf.Sqrt(2f * -Physics.gravity.y * hauteurSaut);
+            // Consomme l'appui et le sol : pas de double saut
+            tempsDepuisAppui = 999f;
+            tempsDepuisSol = 999f;
         }
 
-        // Calculer la rotation souhaitée.
-        //
-        // Quaternion.LookRotation crée une orientation
-        // qui dirige l'avant du robot (axe Z local)
-        // vers la direction de déplacement.
-        //
-        // Vector3.up indique que l'axe Y
-        // doit rester orienté vers le haut.
-        Quaternion cible = Quaternion.LookRotation(
-            direction,
-            Vector3.up
-        );
+        corps.linearVelocity = v;
+        auSol = false; // remis à vrai par OnCollisionStay s'il y a toujours un sol
+    }
 
-        // Faire tourner progressivement le robot
-        // vers la rotation souhaitée.
-        //
-        // Quaternion.Slerp réalise une interpolation
-        // sphérique entre deux orientations.
-        //
-        // corps.rotation : rotation actuelle.
-        // cible : rotation souhaitée.
-        // vitesseRotation * Time.fixedDeltaTime :
-        // facteur d'interpolation.
-        //
-        // MoveRotation applique la nouvelle rotation
-        // au Rigidbody.
-        corps.MoveRotation(
-            Quaternion.Slerp(
-                corps.rotation,
-                cible,
-                vitesseRotation * Time.fixedDeltaTime
-            )
-        );
+    private void OnCollisionStay(Collision collision)
+    {
+        for (int i = 0; i < collision.contactCount; i++)
+        {
+            if (collision.GetContact(i).normal.y > 0.5f)
+            {
+                auSol = true;
+                return;
+            }
+        }
     }
 }
