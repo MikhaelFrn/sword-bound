@@ -2600,15 +2600,15 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 0b7daaf5ed5198a46bc0858419affdfa, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 961881086}
+      addedObject: {fileID: 961881089}
   m_SourcePrefab: {fileID: 100100000, guid: 0b7daaf5ed5198a46bc0858419affdfa, type: 3}
 --- !u!4 &961881082 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 0b7daaf5ed5198a46bc0858419affdfa, type: 3}
   m_PrefabInstance: {fileID: 961881081}
   m_PrefabAsset: {fileID: 0}
---- !u!136 &961881086
-CapsuleCollider:
+--- !u!64 &961881089
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -2625,11 +2625,10 @@ CapsuleCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5007233
-  m_Height: 1.42291
-  m_Direction: 1
-  m_Center: {x: 0, y: 0.711455, z: 0}
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 8314571269056883277, guid: 0b7daaf5ed5198a46bc0858419affdfa, type: 3}
 --- !u!4 &989614266 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 167086637822059578, guid: 20d7935fdea21aa47a2236ee83edefbc, type: 3}
@@ -4824,48 +4823,7 @@ SceneRoots:
   - {fileID: 1461014154}
   - {fileID: 1270187352}
   - {fileID: 172875053}
-  - {fileID: 173122107}
-  - {fileID: 1393660661}
-  - {fileID: 1662285716}
-  - {fileID: 544568292}
-  - {fileID: 1405176607}
-  - {fileID: 228041823}
-  - {fileID: 901226368}
-  - {fileID: 1160823388}
-  - {fileID: 837309926}
-  - {fileID: 951895700}
-  - {fileID: 1575137716}
-  - {fileID: 2134998442}
-  - {fileID: 680798508}
-  - {fileID: 1774292811}
-  - {fileID: 554721844}
-  - {fileID: 282651463}
-  - {fileID: 1022340976}
-  - {fileID: 752654509}
-  - {fileID: 1559081610}
-  - {fileID: 1323063522}
-  - {fileID: 2045585879}
-  - {fileID: 1841537098}
-  - {fileID: 341887075}
-  - {fileID: 474310752}
-  - {fileID: 1670313611}
-  - {fileID: 228497557}
-  - {fileID: 1696441861}
-  - {fileID: 1904330428}
-  - {fileID: 1911812540}
-  - {fileID: 380578677}
-  - {fileID: 1822464378}
-  - {fileID: 1828658927}
-  - {fileID: 1869476837}
-  - {fileID: 919958377}
-  - {fileID: 2110219694}
-  - {fileID: 349371847}
-  - {fileID: 278295997}
-  - {fileID: 1574357665}
-  - {fileID: 721968773}
-  - {fileID: 773147314}
   - {fileID: 1132748819}
-  - {fileID: 1054308844}
   - {fileID: 65787186}
   - {fileID: 1094280034}
   - {fileID: 574624808}
