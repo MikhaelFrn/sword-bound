@@ -2139,9 +2139,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ControleurRobot3D
   vitesse: 5
   multiplicateurSprint: 1.6
+  multiplicateurAccroupi: 0.5
   hauteurSaut: 1.2
   tempsCoyote: 0.12
   tamponSaut: 0.15
+  toucheAccroupi: 306
+  hauteurAccroupie: 1
+  vitesseTransition: 10
+  rigCamera: {fileID: 0}
 --- !u!54 &889197680
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -2794,7 +2799,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4142258926128110, guid: 2a038e4e49fd7f64aa727b5a60cfd55b, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 20
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 4142258926128110, guid: 2a038e4e49fd7f64aa727b5a60cfd55b, type: 3}
       propertyPath: m_LocalPosition.z
