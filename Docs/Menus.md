@@ -10,6 +10,10 @@
 | `Assets/Scripts/UI/PauseMenu.cs` | Pause (Échap / Start manette), `Time.timeScale`, ajout automatique dans les niveaux. |
 | `Assets/Scripts/UI/SceneLoader.cs` | Noms des scènes et changements de scène (un seul endroit à modifier). |
 | `Assets/Scripts/UI/MenuUtility.cs` | EventSystem, sélection clavier/manette, touche pause, curseur. |
+| `Assets/Scripts/UI/MenuButtonFX.cs` | Animation des boutons (survol, sélection, clic), en temps réel : marche pendant la pause. |
+| `Assets/Scripts/UI/MenuFadeIn.cs` | Fondu d'apparition du menu principal et du panneau pause. |
+| `Assets/UI/Logo/` | `Logo_Emblem.png` (menu principal) et `Logo_Wordmark.png` (menu pause). |
+| `Assets/UI/Menu/` | Textures de l'UI : vignette, lueur, fond et contour arrondis des boutons, séparateur. |
 
 Ordre du Build (File > Build Profiles > Scene List) : `0 MainMenu`, `1 TerrainTest`. `SampleScene` reste dans la liste mais décochée.
 
@@ -60,4 +64,7 @@ Modifier `SceneLoader.FirstLevelScene` (ou le champ **First Level Scene** du com
 
 ## Style
 
-UI en `Text` intégré (police `LegacyRuntime`) : aucun asset à importer. Si l'équipe importe **TextMesh Pro Essentials** pour le HUD, les textes peuvent être remplacés par des `TextMeshProUGUI` sans toucher aux scripts. Couleurs : fond brun très sombre, accents or (thème médiéval).
+Palette du logo : or patiné `#D4A951`, brun foncé `#2B2118`, noir chaud `#0E0C0A`, texte crème `#EDE3CF`.
+Les boutons ont la transition Unity à **None** : c'est `MenuButtonFX` qui gère les couleurs et l'échelle (réglables dans l'Inspector).
+Texte en `Text` intégré (police `LegacyRuntime`) : TextMesh Pro n'est pas importé dans le projet.
+Canvas Scaler : Scale With Screen Size, 1920×1080, Match 0.5 (vérifié en 16:9, 16:10 et 4:3).
