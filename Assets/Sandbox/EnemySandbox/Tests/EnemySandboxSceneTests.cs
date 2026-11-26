@@ -51,6 +51,47 @@ public class EnemySandboxSceneTests
         Shot("sandbox_play_death.png");
     }
 
+    [UnityTest]
+    public IEnumerator Sandbox_IA_Patrouille_Poursuite_Attaque()
+    {
+        yield return EditorSceneManager.LoadSceneAsyncInPlayMode(ScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+        Camera cam = Camera.main;
+        EnemyAI ai = Object.FindAnyObjectByType<EnemyAI>();
+        GameObject dummy = GameObject.Find("DummyPlayer");
+        Assert.IsNotNull(ai, "EnemyAI dans la scène");
+        Assert.IsNotNull(dummy, "DummyPlayer dans la scène");
+        Assert.AreEqual("Player", dummy.tag);
+        Component dummyHealth = dummy.GetComponent("TargetDummyHealth");
+        Assert.IsNotNull(dummyHealth, "TargetDummyHealth (pas de script manquant)");
+        System.Func<int> dummyHp = () => (int)dummyHealth.GetType().GetProperty("CurrentHealth").GetValue(dummyHealth);
+
+        // 1) Patrouille : le DummyPlayer est caché derrière le mur.
+        yield return RenderFor(cam, 4f);
+        Assert.AreEqual(EnemyState.Patrol, ai.State, "caché derrière le mur : patrouille");
+        Assert.AreEqual(dummy.transform, ai.Target, "cible trouvée par le tag Player");
+        Shot("ai_1_patrol.png");
+
+        // 2) Poursuite : le DummyPlayer sort de derrière le mur.
+        Rigidbody body = dummy.GetComponent<Rigidbody>();
+        body.position = new Vector3(-9f, 1f, 9f);
+        yield return RenderFor(cam, 1.2f);
+        Assert.AreEqual(EnemyState.Chase, ai.State, "vu : poursuite");
+        Shot("ai_2_chase.png");
+
+        // 3) Attaque : on attend que l'ennemi arrive au contact.
+        int hpBefore = dummyHp();
+        LogAssert.Expect(LogType.Log, new System.Text.RegularExpressions.Regex(@"\[DummyPlayer\] -10 PV"));
+        float end = Time.time + 8f;
+        while (dummyHp() == hpBefore && Time.time < end)
+        {
+            yield return RenderFor(cam, 0.05f);
+        }
+        Assert.AreEqual(EnemyState.Attack, ai.State, "au contact : attaque");
+        Assert.AreEqual(hpBefore - ai.AttackDamage, dummyHp(), "le DummyPlayer a perdu des PV");
+        yield return RenderFor(cam, 0.3f);
+        Shot("ai_3_attack.png");
+    }
+
     private static IEnumerator RenderFor(Camera cam, float seconds)
     {
         // Toujours rendre vers une texture : en batch il n'y a pas d'écran (rendre "à l'écran" fait planter Unity).

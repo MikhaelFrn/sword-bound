@@ -31,6 +31,12 @@ public class EnemyPlayModeTests
         Object.Destroy(ground);
     }
 
+    private void RemoveAI()
+    {
+        EnemyAI ai = enemy.GetComponent<EnemyAI>();
+        if (ai != null) Object.DestroyImmediate(ai);
+    }
+
     private EnemyHealth Health => enemy.GetComponent<EnemyHealth>();
     private EnemyAnimation Anim => enemy.GetComponent<EnemyAnimation>();
     private Animator Animator => enemy.GetComponent<Animator>();
@@ -215,6 +221,7 @@ public class EnemyPlayModeTests
     [UnityTest]
     public IEnumerator EnemyAnimation_LitLaVitesseDuRigidbody()
     {
+        RemoveAI(); // on teste EnemyAnimation seul : l'IA remettrait la vitesse à zéro
         Rigidbody body = enemy.GetComponent<Rigidbody>();
         for (float t = 0; t < 1f; t += Time.fixedDeltaTime)
         {
@@ -230,6 +237,7 @@ public class EnemyPlayModeTests
     [UnityTest]
     public IEnumerator EnemyAnimation_SansRigidbody_LitLeDeplacement()
     {
+        RemoveAI(); // l'IA exige un Rigidbody (RequireComponent)
         Object.DestroyImmediate(enemy.GetComponent<Rigidbody>());
         yield return null;
         float walk = Anim.VitesseCourse * 0.5f;

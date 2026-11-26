@@ -21,8 +21,10 @@ namespace SwordBound.Enemies
         private const string HitState = "Hit";
         private const string DeathClipName = "Death";
 
-        [Tooltip("Vitesse (m/s) qui correspond à la course (Vitesse = 1). La marche est à la moitié.")]
+        [Tooltip("Vitesse (m/s) qui correspond à la course (Vitesse = 1). Réglée automatiquement par EnemyAI (runSpeed).")]
         [SerializeField, Min(0.1f)] private float vitesseCourse = 4f;
+        [Tooltip("Vitesse (m/s) qui correspond à la marche (Vitesse = 0,5). 0 = moitié de la course. Réglée automatiquement par EnemyAI (walkSpeed).")]
+        [SerializeField, Min(0f)] private float vitesseMarche = 0f;
         [Tooltip("Lissage du paramètre Vitesse (secondes).")]
         [SerializeField, Min(0f)] private float dampTime = 0.1f;
         [Tooltip("Délai minimum entre deux animations de dégâts.")]
@@ -43,7 +45,19 @@ namespace SwordBound.Enemies
         private float speedOverride;
 
         public Animator Animator => animator;
-        public float VitesseCourse => vitesseCourse;
+        /// <summary>Vitesse (m/s) qui donne Run (Vitesse = 1).</summary>
+        public float VitesseCourse
+        {
+            get => vitesseCourse;
+            set => vitesseCourse = Mathf.Max(0.1f, value);
+        }
+
+        /// <summary>Vitesse (m/s) qui donne Walk (Vitesse = 0,5). 0 = moitié de la course.</summary>
+        public float VitesseMarche
+        {
+            get => vitesseMarche > 0f ? Mathf.Min(vitesseMarche, vitesseCourse) : vitesseCourse * 0.5f;
+            set => vitesseMarche = Mathf.Max(0f, value);
+        }
         public bool IsDead => isDead;
 
         /// <summary>Durée du clip "Death" du contrôleur (0 si introuvable).</summary>
@@ -77,9 +91,22 @@ namespace SwordBound.Enemies
                 return;
             }
 
-            float speed = hasSpeedOverride ? speedOverride * vitesseCourse : MeasureSpeed();
-            float normalized = Mathf.Clamp01(speed / vitesseCourse);
+            float normalized = hasSpeedOverride ? speedOverride : Normalize(MeasureSpeed());
             animator.SetFloat(VitesseHash, normalized, dampTime, Time.deltaTime);
+        }
+
+        /// <summary>
+        /// Vitesse en m/s vers le paramètre Vitesse : 0 → 0, marche → 0,5, course → 1 (linéaire entre les deux).
+        /// </summary>
+        public float Normalize(float speed)
+        {
+            float walk = VitesseMarche;
+            if (speed <= walk)
+            {
+                return walk <= 0f ? 0f : 0.5f * Mathf.Clamp01(speed / walk);
+            }
+            float span = vitesseCourse - walk;
+            return span <= 0f ? 1f : Mathf.Clamp01(0.5f + 0.5f * (speed - walk) / span);
         }
 
         private float MeasureSpeed()
@@ -168,14 +195,16 @@ namespace SwordBound.Enemies
             animator.SetTrigger(MortHash);
         }
 
+        // Vrai si l'Animator est dans cet état (et n'en sort pas) ou est en train d'y entrer.
+        // Pendant le fondu de sortie (ex. Attack -> Locomotion), on peut déjà relancer l'animation.
         private bool IsInOrEntering(string stateName)
         {
-            if (animator.GetCurrentAnimatorStateInfo(0).IsName(stateName))
+            if (animator.IsInTransition(0))
             {
-                return true;
+                return animator.GetNextAnimatorStateInfo(0).IsName(stateName);
             }
 
-            return animator.IsInTransition(0) && animator.GetNextAnimatorStateInfo(0).IsName(stateName);
+            return animator.GetCurrentAnimatorStateInfo(0).IsName(stateName);
         }
     }
 }

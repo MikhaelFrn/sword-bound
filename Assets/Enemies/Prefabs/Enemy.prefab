@@ -68,6 +68,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1633562805444969416, guid: 5dedfeb3de6bcc940a828a0a075f1576, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5515273204055215567}
+    - targetCorrespondingSourceObject: {fileID: 1633562805444969416, guid: 5dedfeb3de6bcc940a828a0a075f1576, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 210234613299080510}
   m_SourcePrefab: {fileID: 100100000, guid: 5dedfeb3de6bcc940a828a0a075f1576, type: 3}
 --- !u!1 &8085856928393560033 stripped
 GameObject:
@@ -136,7 +139,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b41760b895270fe4ca8f3323d921c687, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SwordBound.Enemies::SwordBound.Enemies.EnemyAnimation
-  vitesseCourse: 4
+  vitesseCourse: 4.5
+  vitesseMarche: 2
   dampTime: 0.1
   hitCooldown: 0.4
 --- !u!114 &5515273204055215567
@@ -155,3 +159,37 @@ MonoBehaviour:
   destroyDelay: 4
   deathAnimationMargin: 0.5
   disableOnDeath: []
+--- !u!114 &210234613299080510
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8085856928393560033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4438ef6b3a35c4d4bb6910f15213fdc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SwordBound.Enemies::SwordBound.Enemies.EnemyAI
+  target: {fileID: 0}
+  targetSearchInterval: 1
+  patrolPoints: []
+  waitTimeMin: 1
+  waitTimeMax: 2.5
+  walkSpeed: 2
+  pointReachedDistance: 0.35
+  detectionRange: 12
+  loseRange: 18
+  loseSightTime: 3
+  requireLineOfSight: 1
+  eyeHeight: 1.6
+  sightBlockers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  runSpeed: 4.5
+  turnSpeed: 360
+  attackRange: 1.8
+  attackRangeTolerance: 0.4
+  attackHitDelay: 0.4
+  attackDamage: 10
+  attackCooldown: 1.5
