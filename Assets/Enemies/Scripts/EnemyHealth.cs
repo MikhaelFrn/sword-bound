@@ -13,6 +13,16 @@ namespace SwordBound.Enemies
     {
         [Header("Points de vie")]
         [SerializeField, Min(1)] private int maxHealth = 100;
+        [Tooltip("Coché sur le prefab Boss : permet au GameManager de reconnaître sa mort (AnyEnemyDied).")]
+        [SerializeField] private bool isBoss = false;
+
+        [Header("Effets")]
+        [Tooltip("Effet joué à chaque coup reçu (si l'ennemi survit). Vide = aucun effet.")]
+        [SerializeField] private GameObject hitEffectPrefab;
+        [Tooltip("Effet joué une seule fois à la mort. Vide = aucun effet.")]
+        [SerializeField] private GameObject deathEffectPrefab;
+        [Tooltip("Hauteur (m) au-dessus des pieds où les effets apparaissent.")]
+        [SerializeField, Min(0f)] private float effectHeight = 1.2f;
 
         [Header("Mort")]
         [Tooltip("Délai avant la destruction de l'objet. Allongé automatiquement si l'animation de mort est plus longue.")]
@@ -38,6 +48,13 @@ namespace SwordBound.Enemies
         public int CurrentHealth => currentHealth;
         public int MaxHealth => maxHealth;
         public bool IsDead => isDead;
+
+        /// <summary>Vrai pour le boss (valeur réglée sur le prefab Boss).</summary>
+        public bool IsBoss => isBoss;
+
+        public GameObject HitEffectPrefab => hitEffectPrefab;
+        public GameObject DeathEffectPrefab => deathEffectPrefab;
+        public float EffectHeight => effectHeight;
 
         /// <summary>Délai réel entre la mort et la destruction (au moins la durée de l'animation de mort + marge).</summary>
         public float EffectiveDestroyDelay
@@ -69,8 +86,11 @@ namespace SwordBound.Enemies
             if (currentHealth == 0)
             {
                 Die();
+                return;
             }
-            else if (enemyAnimation != null)
+
+            SpawnEffect(hitEffectPrefab);
+            if (enemyAnimation != null)
             {
                 enemyAnimation.PlayHit();
             }
@@ -143,10 +163,23 @@ namespace SwordBound.Enemies
                 }
             }
 
+            SpawnEffect(deathEffectPrefab);
+
             OnDied?.Invoke(this);
             AnyEnemyDied?.Invoke(this);
 
             Destroy(gameObject, EffectiveDestroyDelay);
+        }
+
+        // Jamais en enfant de l'ennemi : il est détruit après sa mort, l'effet doit lui survivre.
+        private void SpawnEffect(GameObject prefab)
+        {
+            if (prefab == null)
+            {
+                return;
+            }
+
+            Instantiate(prefab, transform.position + Vector3.up * effectHeight, Quaternion.identity);
         }
 
         // Remet l'événement statique à zéro à chaque Play (utile si "Enter Play Mode Options" est activé).

@@ -156,6 +156,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SwordBound.Enemies::SwordBound.Enemies.EnemyHealth
   maxHealth: 100
+  isBoss: 0
+  hitEffectPrefab: {fileID: 1603809524067554796, guid: 42d7b0965b2e68244b35fa3e92f1478b, type: 3}
+  deathEffectPrefab: {fileID: 2635618570493353778, guid: 12642ee6b7bc93a4bbb07aa092a0697d, type: 3}
+  effectHeight: 1.2
   destroyDelay: 4
   deathAnimationMargin: 0.5
   disableOnDeath: []

@@ -27,7 +27,7 @@ public class EnemySandboxSceneTests
         var so = new UnityEditor.SerializedObject(driver);
         Assert.IsNotNull(so.FindProperty("enemyPrefab").objectReferenceValue, "driver.enemyPrefab");
         Assert.IsNotNull(so.FindProperty("enemy").objectReferenceValue, "driver.enemy");
-        EnemyHealth health = Object.FindAnyObjectByType<EnemyHealth>();
+        EnemyHealth health = GameObject.Find("Enemy").GetComponent<EnemyHealth>(); // (un Boss est aussi dans la scène)
         Assert.IsNotNull(health, "ennemi présent");
         Animator anim = health.GetComponent<Animator>();
         Assert.IsTrue(anim.GetCurrentAnimatorStateInfo(0).IsName("Locomotion"));
@@ -56,7 +56,7 @@ public class EnemySandboxSceneTests
     {
         yield return EditorSceneManager.LoadSceneAsyncInPlayMode(ScenePath, new LoadSceneParameters(LoadSceneMode.Single));
         Camera cam = Camera.main;
-        EnemyAI ai = Object.FindAnyObjectByType<EnemyAI>();
+        EnemyAI ai = GameObject.Find("Enemy").GetComponent<EnemyAI>(); // (un Boss est aussi dans la scène)
         GameObject dummy = GameObject.Find("DummyPlayer");
         Assert.IsNotNull(ai, "EnemyAI dans la scène");
         Assert.IsNotNull(dummy, "DummyPlayer dans la scène");
